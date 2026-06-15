@@ -1,73 +1,97 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
-import { dishes } from "./data";
+import React, { useState, useContext } from "react";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import { MenuContext } from "../Screens/MenuContext";
+import DropDownPicker from "react-native-dropdown-picker";
+import { menuHelper } from "../utils/menuHelpers"; // Centralized helper for formatting and calculations
 
 const AddDishScreen: React.FC = () => {
+  const { dishes, addDish, removeDish } = useContext(MenuContext);
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Main");
   const [price, setPrice] = useState("");
-  const [refresh, setRefresh] = useState(false);
 
-  const handleSave = () => {
-    if (!name || !description || !category || !price) {
-      Alert.alert("Error", "Please fill in all fields.");
+  // Dropdown state for category selection
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState("Starter");
+  const [items, setItems] = useState([
+    { label: "Starter", value: "Starter" },
+    { label: "Main", value: "Main" },
+    { label: "Dessert", value: "Dessert" },
+  ]);
+
+  // Handle dish creation and reset form fields
+  const handleAddDish = () => {
+    if (!name.trim() || !description.trim() || !price.trim()) {
+      alert("Please fill in all fields");
       return;
     }
 
-    const newDish = {
-      id: dishes.length + 1,
+    addDish({
+      id: Date.now(),
       name,
       description,
       category,
       price: parseFloat(price),
-    };
+    });
 
-    dishes.push(newDish);
-    Alert.alert("Success", `Dish "${name}" added successfully!`);
-
-    setName(""); setDescription(""); setCategory("Main"); setPrice("");
-    setRefresh(!refresh);
-  };
-
-  const handleRemove = (id: number) => {
-    const index = dishes.findIndex(d => d.id === id);
-    if (index !== -1) {
-      dishes.splice(index, 1);
-      Alert.alert("Removed", "Dish removed successfully!");
-      setRefresh(!refresh);
-    }
+    setName("");
+    setDescription("");
+    setCategory("Starter");
+    setPrice("");
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Add / Edit Dish</Text>
 
-      {/* Inputs */}
+      {/* Input fields for dish details */}
       <TextInput style={styles.input} placeholder="Dish Name" value={name} onChangeText={setName} />
       <TextInput style={styles.input} placeholder="Description" value={description} onChangeText={setDescription} />
-      <TextInput style={styles.input} placeholder="Category (Starter/Main/Dessert)" value={category} onChangeText={setCategory} />
-      <TextInput style={styles.input} placeholder="Price (R)" keyboardType="numeric" value={price} onChangeText={setPrice} />
 
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
+      {/* Dropdown for selecting dish category */}
+      <DropDownPicker
+        open={open}
+        value={category}
+        items={items}
+        setOpen={setOpen}
+        setValue={setCategory}
+        setItems={setItems}
+        style={styles.dropdown}
+        dropDownContainerStyle={styles.dropdownContainer}
+      />
+
+      {/* Input for dish price */}
+      <TextInput
+        style={styles.input}
+        placeholder="Price (R)"
+        keyboardType="numeric"
+        value={price}
+        onChangeText={setPrice}
+      />
+
+      {/* Save button to add dish */}
+      <TouchableOpacity style={styles.button} onPress={handleAddDish}>
         <Text style={styles.buttonText}>Save Dish</Text>
       </TouchableOpacity>
 
-      {/* Current Menu Items */}
-      <Text style={styles.sectionTitle}>Current Menu Items</Text>
+      <Text style={styles.subtitle}>Current Menu Items</Text>
+
+      {/* Render list of existing dishes with remove option */}
       <FlatList
         data={dishes}
         keyExtractor={item => item.id.toString()}
-        extraData={refresh}
         renderItem={({ item }) => (
-          <View style={styles.dishCard}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <View>
+          <View style={styles.card}>
+            <View style={styles.cardContent}>
+              <View style={styles.dishInfo}>
                 <Text style={styles.dishName}>{item.name}</Text>
                 <Text style={styles.dishCategory}>{item.category}</Text>
-                <Text style={styles.dishPrice}>R{item.price}</Text>
+                <Text style={styles.dishDescription}>{item.description}</Text>
+                {/* Format price using menuHelper */}
+                <Text style={styles.dishPrice}>{menuHelper([], "format", item.price)}</Text>
               </View>
-              <TouchableOpacity style={styles.removeButton} onPress={() => handleRemove(item.id)}>
+              <TouchableOpacity style={styles.removeButton} onPress={() => removeDish(item.id)}>
                 <Text style={styles.removeText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -79,18 +103,23 @@ const AddDishScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b132b", padding: 20 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#fff", marginBottom: 20 },
-  input: { backgroundColor: "#fff", borderRadius: 8, padding: 12, marginBottom: 15 },
+  container: { flex: 1, backgroundColor: "#0b132b", padding: 16 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#FFD700", marginBottom: 20 },
+  input: { backgroundColor: "#fff", padding: 12, borderRadius: 8, marginBottom: 12 },
+  dropdown: { backgroundColor: "#fff", borderRadius: 8, marginBottom: 12 },
+  dropdownContainer: { backgroundColor: "#fff" },
   button: { backgroundColor: "#FFD700", paddingVertical: 14, borderRadius: 8, alignItems: "center", marginBottom: 20 },
   buttonText: { color: "#0b132b", fontSize: 18, fontWeight: "600" },
-  sectionTitle: { fontSize: 20, fontWeight: "600", color: "#FFD700", marginBottom: 10 },
-  dishCard: { backgroundColor: "#fff", padding: 12, borderRadius: 8, marginBottom: 10 },
+  subtitle: { fontSize: 20, fontWeight: "600", color: "#fff", marginBottom: 12 },
+  card: { backgroundColor: "#fff", padding: 16, borderRadius: 8, marginBottom: 12 },
+  cardContent: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  dishInfo: { flexShrink: 1 },
   dishName: { fontSize: 18, fontWeight: "bold", color: "#0b132b" },
   dishCategory: { fontSize: 14, color: "#555" },
-  dishPrice: { fontSize: 16, fontWeight: "600", color: "#FFD700" },
-  removeButton: { backgroundColor: "#e63946", padding: 8, borderRadius: 6 },
-  removeText: { color: "#fff", fontWeight: "bold" },
+  dishDescription: { fontSize: 14, color: "#333", marginTop: 4 },
+  dishPrice: { fontSize: 16, fontWeight: "600", color: "#FFD700", marginTop: 6 },
+  removeButton: { backgroundColor: "#ff4d4d", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6 },
+  removeText: { color: "#fff", fontWeight: "600" },
 });
 
 export default AddDishScreen;

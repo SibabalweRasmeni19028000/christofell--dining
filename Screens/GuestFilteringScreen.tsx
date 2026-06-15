@@ -1,18 +1,19 @@
 import React, { useContext, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
-import { MenuContext } from "../Screens/MenuContext";
-import { menuHelper } from "../utils/menuHelpers"; // Centralized helper for filtering and formatting
+import { MenuContext } from "./MenuContext";
+import { menuHelper } from "../utils/menuHelpers"; 
 
-const FullMenuScreen: React.FC = () => {
+const GuestFilteringScreen = () => {
   const { dishes } = useContext(MenuContext);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // Filter dishes by selected category using menuHelper
+  // Filter dishes and count items by category using menuHelper
   const filteredDishes = menuHelper(dishes, "filter", selectedCategory);
+  const itemCount = menuHelper(dishes, "count", selectedCategory);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Full Menu</Text>
+      <Text style={styles.title}>Guest Menu</Text>
 
       {/* Category filter buttons */}
       <View style={styles.filterRow}>
@@ -37,7 +38,10 @@ const FullMenuScreen: React.FC = () => {
         ))}
       </View>
 
-      {/* Render list of dishes with formatted price */}
+      {/* Display item count for selected category */}
+      <Text style={styles.countText}>Showing {itemCount} items</Text>
+
+      {/* Render filtered dish list with formatted price */}
       <FlatList
         data={filteredDishes}
         keyExtractor={item => item.id.toString()}
@@ -67,18 +71,13 @@ const styles = StyleSheet.create({
   filterButtonActive: { backgroundColor: "#FFD700" },
   filterText: { color: "#0b132b", fontWeight: "600" },
   filterTextActive: { color: "#0b132b", fontWeight: "700" },
+  countText: { color: "#fff", fontSize: 16, marginBottom: 12, textAlign: "center" },
   card: { backgroundColor: "#fff", padding: 16, borderRadius: 8, marginBottom: 12 },
   dishName: { fontSize: 18, fontWeight: "bold", color: "#0b132b" },
   dishDescription: { fontSize: 14, color: "#333", marginTop: 4 },
   dishPrice: { fontSize: 16, fontWeight: "600", color: "#FFD700", marginTop: 6 },
 });
 
-export default FullMenuScreen;
-
-
-
-
-
-
+export default GuestFilteringScreen;
 
 

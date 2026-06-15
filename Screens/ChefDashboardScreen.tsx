@@ -1,72 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useContext } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useIsFocused } from "@react-navigation/native"; 
-import { dishes } from "./data"; 
-
-
-let orders = [
-  { id: 1, total: 220, status: "active" },
-  { id: 2, total: 95, status: "pending" },
-  { id: 3, total: 280, status: "active" },
-  { id: 4, total: 150, status: "completed" },
-];
+import { MenuContext } from "./MenuContext";
+import { menuHelper } from "../utils/menuHelpers"; // Centralized helper for calculations and formatting
 
 const ChefDashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const isFocused = useIsFocused();
-  const [menuCount, setMenuCount] = useState(dishes.length);
+  const { dishes } = useContext(MenuContext);
 
-  useEffect(() => {
-    if (isFocused) {
-      setMenuCount(dishes.length); 
-    }
-  }, [isFocused]);
-
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-  const activeOrders = orders.filter(o => o.status === "active").length;
-  const pendingRequests = orders.filter(o => o.status === "pending").length;
-  const completedOrders = orders.filter(o => o.status === "completed").length;
+  // Calculate average prices per category using menuHelper
+  const avgStarter = menuHelper(dishes, "average", "Starter");
+  const avgMain = menuHelper(dishes, "average", "Main");
+  const avgDessert = menuHelper(dishes, "average", "Dessert");
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Chef Dashboard</Text>
-      <Text style={styles.welcome}>Welcome, Chef Christofell</Text>
+      <Text style={styles.subtitle}>Welcome Back, Chef Christoffell</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Today's Revenue</Text>
-        <Text style={styles.cardValue}>R{totalRevenue}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Active Orders</Text>
-        <Text style={styles.cardValue}>{activeOrders}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Pending Requests</Text>
-        <Text style={styles.cardValue}>{pendingRequests}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Completed Orders</Text>
-        <Text style={styles.cardValue}>{completedOrders}</Text>
-      </View>
-
+      {/* Dashboard metrics */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Total Menu Items</Text>
-        <Text style={styles.cardValue}>{menuCount}</Text>
+        <Text style={styles.cardValue}>{menuHelper(dishes, "count", "All")}</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Average Starter Price</Text>
+        <Text style={styles.cardValue}>{menuHelper([], "format", avgStarter)}</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Average Main Price</Text>
+        <Text style={styles.cardValue}>{menuHelper([], "format", avgMain)}</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Average Dessert Price</Text>
+        <Text style={styles.cardValue}>{menuHelper([], "format", avgDessert)}</Text>
       </View>
 
-      
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("AddDish")}>
+      {/* Navigation buttons */}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("AddDish")}
+      >
         <Text style={styles.buttonText}>Add / Edit Dish</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("ManageOrders")}>
-        <Text style={styles.buttonText}>Manage Orders</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate("FullMenu")}
+      >
+        <Text style={styles.buttonText}>View Full Menu</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("FullMenu")}>
-        <Text style={styles.buttonText}>View Full Menu</Text>
+      <TouchableOpacity
+        style={styles.guestButton}
+        onPress={() => navigation.navigate("GuestMenu")}
+      >
+        <Text style={styles.guestButtonText}>Guest Menu</Text>
       </TouchableOpacity>
     </View>
   );
@@ -74,13 +61,29 @@ const ChefDashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0b132b", padding: 16 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#FFD700", marginBottom: 10 },
-  welcome: { fontSize: 18, color: "#fff", marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#FFD700", marginBottom: 8 },
+  subtitle: { fontSize: 18, color: "#fff", marginBottom: 20 },
   card: { backgroundColor: "#fff", padding: 16, borderRadius: 8, marginBottom: 12 },
-  cardTitle: { fontSize: 18, fontWeight: "600", color: "#0b132b" },
+  cardTitle: { fontSize: 16, fontWeight: "600", color: "#0b132b" },
   cardValue: { fontSize: 20, fontWeight: "bold", color: "#FFD700", marginTop: 6 },
-  button: { backgroundColor: "#FFD700", paddingVertical: 14, borderRadius: 8, alignItems: "center", marginTop: 12 },
+  button: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
   buttonText: { color: "#0b132b", fontSize: 18, fontWeight: "600" },
+  guestButton: {
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#FFD700",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  guestButtonText: { color: "#FFD700", fontSize: 18, fontWeight: "700" },
 });
 
 export default ChefDashboardScreen;
